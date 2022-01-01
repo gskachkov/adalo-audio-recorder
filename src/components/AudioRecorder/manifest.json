@@ -1,0 +1,224 @@
+{
+  "displayName": "Audio Recorder",
+  "defaultWidth": 405,
+  "defaultHeight": 36,
+  "components": "./index.js",
+  "icon": "./example-thumbnail.png",
+  "props": [
+    {
+      "name": "controlType",
+      "displayName": "How do you want to control the component",
+      "type": "text",
+      "control": {
+        "type": "menu",
+        "options": [{
+          "label": "Using built-in buttons", "value":"builtIn"
+        },
+        {
+          "label": "Using input actions and magic text", "value":"inputActions" 
+        }]
+      }
+    },
+    {
+      "name": "recordTitle",
+      "displayName": "Label for the RECORD button",
+      "type": "text",
+      "default": "Play",
+      "styles": {
+        "fontFamily": "@body",
+        "color": "#757575",
+        "fontWeight": "normal"
+      },
+      "enabled": {
+        "controlType": "builtIn"
+      }
+    },
+    {
+      "name": "recordIcon",
+      "displayName": "Record Icon",
+      "type": "icon",
+      "default": "play_arrow",
+      "enabled": {
+        "controlType": "builtIn"
+      }
+    },
+    {
+      "name": "recordBackgroundColor",
+      "displayName": "Record Background Color",
+      "type": "color",
+      "default": "@primary",
+      "enabled": {
+        "controlType": "builtIn"
+      }
+    },
+    {
+      "name": "pauseTitle",
+      "displayName": "Label for the PAUSE button",
+      "type": "text",
+      "default": "Pause",
+      "styles": {
+        "fontFamily": "@body",
+        "color": "#757575",
+        "fontWeight": "normal"
+      },
+      "enabled": {
+        "controlType": "builtIn"
+      }
+    },
+    {
+      "name": "pauseIcon",
+      "displayName": "Pause Icon",
+      "type": "icon",
+      "default": "pause",
+      "enabled": {
+        "controlType": "builtIn"
+      }
+    },
+    {
+      "name": "pauseBackgroundColor",
+      "displayName": "Pause Background Color",
+      "type": "color",
+      "default": "@primary",
+      "enabled": {
+        "controlType": "builtIn"
+      }
+    },
+    {
+      "name": "resumeTitle",
+      "displayName": "Label for the RESUME button",
+      "type": "text",
+      "default": "Resume",
+      "styles": {
+        "fontFamily": "@body",
+        "color": "#757575",
+        "fontWeight": "normal"
+      },
+      "enabled": {
+        "controlType": "builtIn"
+      }
+    },
+    {
+      "name": "resumeIcon",
+      "displayName": "Resume Icon",
+      "type": "icon",
+      "default": "stop",
+      "enabled": {
+        "controlType": "builtIn"
+      }
+    },
+    {
+      "name": "resumeBackgroundColor",
+      "displayName": "Resume Background Color",
+      "type": "color",
+      "default": "@primary",
+      "enabled": {
+        "controlType": "builtIn"
+      }
+    },
+    {
+      "name": "stopTitle",
+      "displayName": "Label for the STOP button",
+      "type": "text",
+      "default": "Stop",
+      "styles": {
+        "fontFamily": "@body",
+        "color": "#757575",
+        "fontWeight": "normal"
+      },
+      "enabled": {
+        "controlType": "builtIn"
+      }
+    },
+    {
+      "name": "stopIcon",
+      "displayName": "Stop Icon",
+      "type": "icon",
+      "default": "add",
+      "enabled": {
+        "controlType": "builtIn"
+      }
+    },
+    {
+      "name": "stopBackgroundColor",
+      "displayName": "Stop Background Color",
+      "type": "color",
+      "default": "@primary",
+      "enabled": {
+        "controlType": "builtIn"
+      }
+    },
+    {
+      "name": "startRecording",
+      "displayName": "To START Recording set this to true",
+      "type": "text",
+      "enabled": {
+        "controlType": "inputActions"
+      }
+    },
+    {
+      "name": "pauseRecording",
+      "displayName": "To PAUSE Recording set this to true",
+      "type": "text",
+      "enabled": {
+        "controlType": "inputActions"
+      }
+    },
+    {
+      "name": "resumeRecording",
+      "displayName": "To RESUME Recording set this to true",
+      "type": "text",
+      "enabled": {
+        "controlType": "inputActions"
+      }
+    },
+    {
+      "name": "stopRecording",
+      "displayName": "To STOP Recording set this to true",
+      "type": "text",
+      "enabled": {
+        "controlType": "inputActions"
+      }
+    },
+    {
+      "name": "maxRecordingTime",
+      "displayName": "What is the longest a person should be able to record for (in ms)?",
+      "type": "number"
+    },
+    {
+      "name": "onStart",
+      "displayName": "Triggered when the recodring has started",
+      "type": "action"
+    },
+    {
+      "name": "onPause",
+      "displayName": "Triggered when the recodring is paused",
+      "type": "action"
+    },
+    {
+      "name": "onResume",
+      "displayName": "Triggered when the recodring is resumed",
+      "type": "action"
+    },
+    {
+      "name": "onStop",
+      "displayName": "Triggered when the recodring is stopped",
+      "type": "action"
+    },
+    {
+      "name": "onStream",
+      "displayName": "Triggered after the recording has stopped and the audio is ready",
+      "type": "action",
+      "arguments": [
+        {
+          "displayName": "The Audio Track (base64 url)",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "name": "onError",
+      "displayName": "Triggered when an error occurs",
+      "type": "action"
+    }
+  ]
+}
