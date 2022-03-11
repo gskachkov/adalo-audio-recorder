@@ -12,15 +12,20 @@ const AudioRecorder = (props) => {
     editor,
     startRecording,
     pauseRecording,
-		resumeRecording,
-		stopRecording,
-		onStart,
-		onPause,
-		onResume,
-		onStop,
+    resumeRecording,
+    stopRecording,
+    onStart,
+    onPause,
+    onResume,
+    onStop,
     onStream,
     maxRecordingTime,
-    styles: { recordTitle: recordTitleStyles, pauseTitle: pauseTitleStyles, resumeTitle: resumeTitleStyles, stopTitle: stopTitleStyles },
+    styles: {
+      recordTitle: recordTitleStyles,
+      pauseTitle: pauseTitleStyles,
+      resumeTitle: resumeTitleStyles,
+      stopTitle: stopTitleStyles,
+    },
     recordTitle = "Play",
     recordBackgroundColor,
     recordIcon,
@@ -33,6 +38,7 @@ const AudioRecorder = (props) => {
     stopTitle = "Stop",
     stopBackgroundColor,
     stopIcon,
+    controlType = "builtIn",
   } = props;
   const getDeviceStream = async () => {
     try {
@@ -43,7 +49,7 @@ const AudioRecorder = (props) => {
         chunks.push(e.data);
       };
       mediaRecorder.onstop = async (e) => {
-				debugger
+        debugger;
         const blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
         const reader = new FileReader();
         reader.onload = () => {
@@ -52,7 +58,7 @@ const AudioRecorder = (props) => {
           }
           setIsRecording(false);
           setIsPaused(false);
-					chunks = []
+          chunks = [];
         };
         reader.readAsDataURL(blob);
       };
@@ -64,31 +70,31 @@ const AudioRecorder = (props) => {
   useEffect(() => {
     if (maxRecordingTime && mediaRecorder && isRecordering) {
       const recordingTimeout = setTimeout(() => {
-				stop()
+        stop();
         setIsRecording(false);
         setIsPaused(false);
-			}, maxRecordingTime);
+      }, maxRecordingTime);
       return () => clearTimeout(recordingTimeout);
     }
   }, [maxRecordingTime, isRecordering, mediaRecorder]);
   useEffect(() => {
     if (!editor && startRecording === "true") {
-        start();
+      start();
     }
   }, [editor, startRecording]);
   useEffect(() => {
     if (!editor && pauseRecording === "true") {
-        pause();
+      pause();
     }
   }, [editor, pauseRecording]);
   useEffect(() => {
     if (!editor && resumeRecording === "true") {
-        resume();
+      resume();
     }
   }, [editor, resumeRecording]);
   useEffect(() => {
     if (!editor && stopRecording === "true") {
-        stop();
+      stop();
     }
   }, [editor, stopRecording]);
   useEffect(() => {
@@ -98,115 +104,117 @@ const AudioRecorder = (props) => {
   }, [editor]);
   const start = () => {
     if (!mediaRecorder) {
-      getDeviceStream()
+      getDeviceStream();
     }
 
-		if (!isRecordering && mediaRecorder) {
-			if (onStart) onStart()
-			mediaRecorder.start();
-			setIsRecording(true);
-		}
+    if (!isRecordering && mediaRecorder) {
+      if (onStart) onStart();
+      mediaRecorder.start();
+      setIsRecording(true);
+    }
   };
   const stop = () => {
-		if (isRecordering && mediaRecorder) {
-			if (onStop) onStop();
-			debugger
-			mediaRecorder.stop();
-			setIsRecording(false);
-			setIsPaused(false);
-		}
+    if (isRecordering && mediaRecorder) {
+      if (onStop) onStop();
+      debugger;
+      mediaRecorder.stop();
+      setIsRecording(false);
+      setIsPaused(false);
+    }
   };
   const pause = () => {
-		if (!isPaused && isRecordering && mediaRecorder) {
-			if (onPause) onPause()
-			mediaRecorder.pause();
-			setIsPaused(true);
-		}
-	};
-  const resume = () => {
-		if (isPaused && isRecordering && mediaRecorder) {
-			if (onResume) onResume()
-			mediaRecorder.resume();
-			setIsPaused(false);
-		}
+    if (!isPaused && isRecordering && mediaRecorder) {
+      if (onPause) onPause();
+      mediaRecorder.pause();
+      setIsPaused(true);
+    }
   };
-  return (
-    <View style={styles.wrapper}>
-      <Button
-        disabled={isRecordering}
-        icon={recordIcon}
-        text={recordTitle}
-				
-        onPress={start}
-        style={{
-          flex: 1,
-          container: {
-            backgroundColor: recordBackgroundColor,
-          },
-          text: {
-            color: recordTitleStyles?.color,
-            fontFamily: recordTitleStyles?.fontFamily,
-            fontSize: recordTitleStyles?.fontSize,
-            fontWeight: recordTitleStyles?.fontWeight,
-          },
-        }}
-      ></Button>
-      <Button
-        disabled={!isRecordering || isPaused}
-        icon={pauseIcon}
-        text={pauseTitle}
-        onPress={pause} 
-        style={{
-          flex: 1,
-          container: {
-            backgroundColor: pauseBackgroundColor,
-          },
-          text: {
-            color: pauseTitleStyles?.color,
-            fontFamily: pauseTitleStyles?.fontFamily,
-            fontSize: pauseTitleStyles?.fontSize,
-            fontWeight: pauseTitleStyles?.fontWeight,
-          },
-        }}
-      ></Button>
-      <Button
-        disabled={!isRecordering || !isPaused}
-        icon={resumeIcon}
-        text={resumeTitle}
-        onPress={resume}
-        style={{
-          flex: 1,
-          container: {
-            backgroundColor: resumeBackgroundColor,
-          },
-          text: {
-            color: resumeTitleStyles?.color,
-            fontFamily: resumeTitleStyles?.fontFamily,
-            fontSize: resumeTitleStyles?.fontSize,
-            fontWeight: resumeTitleStyles?.fontWeight,
-          },
-        }}
-      ></Button>
-      <Button
-        disabled={!isRecordering}
-        icon={stopIcon}
-        text={stopTitle}
-        onPress={stop}
-        style={{
-          flex: 1,
-          container: {
-            backgroundColor: stopBackgroundColor,
-          },
-          text: {
-            color: stopTitleStyles?.color,
-            fontFamily: stopTitleStyles?.fontFamily,
-            fontSize: stopTitleStyles?.fontSize,
-            fontWeight: stopTitleStyles?.fontWeight,
-          },
-        }}
-      ></Button>
-    </View>
-  );
+  const resume = () => {
+    if (isPaused && isRecordering && mediaRecorder) {
+      if (onResume) onResume();
+      mediaRecorder.resume();
+      setIsPaused(false);
+    }
+  };
+  if (controlType === "builtIn") {
+    return (
+      <View style={styles.wrapper}>
+        <Button
+          disabled={isRecordering}
+          icon={recordIcon}
+          text={recordTitle}
+          onPress={start}
+          style={{
+            flex: 1,
+            container: {
+              backgroundColor: recordBackgroundColor,
+            },
+            text: {
+              color: recordTitleStyles?.color,
+              fontFamily: recordTitleStyles?.fontFamily,
+              fontSize: recordTitleStyles?.fontSize,
+              fontWeight: recordTitleStyles?.fontWeight,
+            },
+          }}
+        ></Button>
+        <Button
+          disabled={!isRecordering || isPaused}
+          icon={pauseIcon}
+          text={pauseTitle}
+          onPress={pause}
+          style={{
+            flex: 1,
+            container: {
+              backgroundColor: pauseBackgroundColor,
+            },
+            text: {
+              color: pauseTitleStyles?.color,
+              fontFamily: pauseTitleStyles?.fontFamily,
+              fontSize: pauseTitleStyles?.fontSize,
+              fontWeight: pauseTitleStyles?.fontWeight,
+            },
+          }}
+        ></Button>
+        <Button
+          disabled={!isRecordering || !isPaused}
+          icon={resumeIcon}
+          text={resumeTitle}
+          onPress={resume}
+          style={{
+            flex: 1,
+            container: {
+              backgroundColor: resumeBackgroundColor,
+            },
+            text: {
+              color: resumeTitleStyles?.color,
+              fontFamily: resumeTitleStyles?.fontFamily,
+              fontSize: resumeTitleStyles?.fontSize,
+              fontWeight: resumeTitleStyles?.fontWeight,
+            },
+          }}
+        ></Button>
+        <Button
+          disabled={!isRecordering}
+          icon={stopIcon}
+          text={stopTitle}
+          onPress={stop}
+          style={{
+            flex: 1,
+            container: {
+              backgroundColor: stopBackgroundColor,
+            },
+            text: {
+              color: stopTitleStyles?.color,
+              fontFamily: stopTitleStyles?.fontFamily,
+              fontSize: stopTitleStyles?.fontSize,
+              fontWeight: stopTitleStyles?.fontWeight,
+            },
+          }}
+        ></Button>
+      </View>
+    );
+  }
+  return <View />;
 };
 
 const styles = StyleSheet.create({

@@ -1,7 +1,7 @@
 {
   "name": "audio-recorder-and-player",
   "description": "An audio recorder for Adalo",
-  "version": "1.0.13",
+  "version": "1.0.15",
   "main": "index.js",
   "license": "ISC",
   "author": "Steven McKeown",
