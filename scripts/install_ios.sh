@@ -4,6 +4,9 @@ set -x
 
 name=$PROJECT_NAME
 
+yarn add react-native-sound
+react-native link react-native-sound
+
 yarn add react-native-audio-record
 react-native link react-native-audio-record
 

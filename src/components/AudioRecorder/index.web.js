@@ -1,102 +1,99 @@
 import React, { useState, useEffect } from "react";
 import { Text, View, StyleSheet } from "react-native";
-import { Button } from "@protonapp/react-native-material-ui";
+import { Button, Icon } from "@protonapp/react-native-material-ui";
+import AudioPlayer from "./audioPlayer";
+import mediaSupported, { extensionsSupported } from "./mediaSuported";
 
 const AudioRecorder = (props) => {
   const [isRecordering, setIsRecording] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isRecorded, setIsRecorded] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState();
+  const [mediaRecorderValue, setMediaRecorderValue ] = useState({});
   let chunks = [];
   const {
     onError,
     editor,
-    startRecording,
-    pauseRecording,
-    resumeRecording,
-    stopRecording,
     onStart,
-    onPause,
-    onResume,
     onStop,
     onStream,
+    onStreamAsString,
     maxRecordingTime,
-    styles: {
-      recordTitle: recordTitleStyles,
-      pauseTitle: pauseTitleStyles,
-      resumeTitle: resumeTitleStyles,
-      stopTitle: stopTitleStyles,
-    },
-    recordTitle = "Play",
-    recordBackgroundColor,
-    recordIcon,
-    pauseTitle = "Pause",
-    pauseBackgroundColor,
-    pauseIcon,
-    resumeTitle = "Resume",
-    resumeBackgroundColor,
-    resumeIcon,
-    stopTitle = "Stop",
-    stopBackgroundColor,
-    stopIcon,
-    controlType = "builtIn",
+    showPlayer,
+    commandName,
   } = props;
+
+  const { value : commandNameValue, onChange : commandNameChangeValue } =  commandName;
+
   const getDeviceStream = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      const type = mediaSupported();
+      var options = { mimeType: type }
+      const mediaRecorder = new MediaRecorder(stream, options);
 
       mediaRecorder.ondataavailable = (e) => {
         chunks.push(e.data);
       };
+
       mediaRecorder.onstop = async (e) => {
-        debugger;
-        const blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
+        const blob = new Blob(chunks, { type });
         const reader = new FileReader();
         reader.onload = () => {
-          if (onStream) {
-            onStream(reader.result);
-          }
+          setMediaRecorderValue({ stream: reader.result })
           setIsRecording(false);
-          setIsPaused(false);
+          setIsRecorded(true);
           chunks = [];
         };
         reader.readAsDataURL(blob);
       };
       setMediaRecorder(mediaRecorder);
+
     } catch {
       if (onError) onError();
     }
   };
+
+  useEffect(() => {
+    console.log('commandNameValue', commandNameValue);
+    if (!editor && commandNameValue === "record") {
+      start();
+    } else if (!editor && commandNameValue === "stop") {
+      stop();
+    } else if (!editor && (commandNameValue === "stream" || commandNameValue === "init")) {
+      const asyncOperation = async () => {
+        console.log('commandNameValue', commandNameValue);
+        if (commandNameValue === "stream" && (onStreamAsString || onStream)) {
+            if (onStreamAsString) {
+              const stream = mediaRecorderValue.stream || '';
+              await onStreamAsString(stream.split(',')[1], mediaSupported());
+            }
+            if (onStream) {
+              await onStream({ data: mediaRecorderValue.stream, filename: `fileName.${extensionsSupported()}`}, mediaSupported());
+            }
+            commandNameChangeValue('init');
+        } else if (commandNameValue === "stream" ) {
+          commandNameChangeValue('init');
+        }
+
+        setMediaRecorderValue({ stream: null });
+        setIsRecording(false);
+        setIsRecorded(false);
+      };
+      
+      asyncOperation();
+    }
+  }, [ editor, commandNameValue ]);
+  
   useEffect(() => {
     if (maxRecordingTime && mediaRecorder && isRecordering) {
       const recordingTimeout = setTimeout(() => {
         stop();
         setIsRecording(false);
-        setIsPaused(false);
-      }, maxRecordingTime);
+      }, maxRecordingTime * 1000);
       return () => clearTimeout(recordingTimeout);
     }
   }, [maxRecordingTime, isRecordering, mediaRecorder]);
-  useEffect(() => {
-    if (!editor && startRecording === "true") {
-      start();
-    }
-  }, [editor, startRecording]);
-  useEffect(() => {
-    if (!editor && pauseRecording === "true") {
-      pause();
-    }
-  }, [editor, pauseRecording]);
-  useEffect(() => {
-    if (!editor && resumeRecording === "true") {
-      resume();
-    }
-  }, [editor, resumeRecording]);
-  useEffect(() => {
-    if (!editor && stopRecording === "true") {
-      stop();
-    }
-  }, [editor, stopRecording]);
+
   useEffect(() => {
     if (!editor) {
       getDeviceStream();
@@ -111,110 +108,27 @@ const AudioRecorder = (props) => {
       if (onStart) onStart();
       mediaRecorder.start();
       setIsRecording(true);
+      setIsRecorded(false);
     }
   };
   const stop = () => {
     if (isRecordering && mediaRecorder) {
       if (onStop) onStop();
-      debugger;
       mediaRecorder.stop();
       setIsRecording(false);
-      setIsPaused(false);
     }
   };
-  const pause = () => {
-    if (!isPaused && isRecordering && mediaRecorder) {
-      if (onPause) onPause();
-      mediaRecorder.pause();
-      setIsPaused(true);
-    }
-  };
-  const resume = () => {
-    if (isPaused && isRecordering && mediaRecorder) {
-      if (onResume) onResume();
-      mediaRecorder.resume();
-      setIsPaused(false);
-    }
-  };
-  if (controlType === "builtIn") {
+
+  const audioPlayerControl = () => {
     return (
-      <View style={styles.wrapper}>
-        <Button
-          disabled={isRecordering}
-          icon={recordIcon}
-          text={recordTitle}
-          onPress={start}
-          style={{
-            flex: 1,
-            container: {
-              backgroundColor: recordBackgroundColor,
-            },
-            text: {
-              color: recordTitleStyles?.color,
-              fontFamily: recordTitleStyles?.fontFamily,
-              fontSize: recordTitleStyles?.fontSize,
-              fontWeight: recordTitleStyles?.fontWeight,
-            },
-          }}
-        ></Button>
-        <Button
-          disabled={!isRecordering || isPaused}
-          icon={pauseIcon}
-          text={pauseTitle}
-          onPress={pause}
-          style={{
-            flex: 1,
-            container: {
-              backgroundColor: pauseBackgroundColor,
-            },
-            text: {
-              color: pauseTitleStyles?.color,
-              fontFamily: pauseTitleStyles?.fontFamily,
-              fontSize: pauseTitleStyles?.fontSize,
-              fontWeight: pauseTitleStyles?.fontWeight,
-            },
-          }}
-        ></Button>
-        <Button
-          disabled={!isRecordering || !isPaused}
-          icon={resumeIcon}
-          text={resumeTitle}
-          onPress={resume}
-          style={{
-            flex: 1,
-            container: {
-              backgroundColor: resumeBackgroundColor,
-            },
-            text: {
-              color: resumeTitleStyles?.color,
-              fontFamily: resumeTitleStyles?.fontFamily,
-              fontSize: resumeTitleStyles?.fontSize,
-              fontWeight: resumeTitleStyles?.fontWeight,
-            },
-          }}
-        ></Button>
-        <Button
-          disabled={!isRecordering}
-          icon={stopIcon}
-          text={stopTitle}
-          onPress={stop}
-          style={{
-            flex: 1,
-            container: {
-              backgroundColor: stopBackgroundColor,
-            },
-            text: {
-              color: stopTitleStyles?.color,
-              fontFamily: stopTitleStyles?.fontFamily,
-              fontSize: stopTitleStyles?.fontSize,
-              fontWeight: stopTitleStyles?.fontWeight,
-            },
-          }}
-        ></Button>
-      </View>
+        <AudioPlayer src= { mediaRecorderValue ? mediaRecorderValue.stream : null }/>
     );
   }
-  return <View />;
+  return (
+    <View style={styles.wrapper}>
+      { ((isRecorded && showPlayer) || editor) ?  audioPlayerControl() : (<></>) }
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -222,6 +136,11 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
   },
+  iconBtn: {
+    color: 'white', 
+    paddingLeft: 10, 
+    paddingRight: 10,
+  }
 });
 
 export default AudioRecorder;

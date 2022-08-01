@@ -1,10 +1,10 @@
 {
-  "name": "audio-recorder-and-player",
+  "name": "audio-recorder",
   "description": "An audio recorder for Adalo",
-  "version": "1.0.15",
+  "version": "0.0.25",
   "main": "index.js",
   "license": "ISC",
-  "author": "Steven McKeown",
+  "author": "Skachkov Oleksandr",
   "scripts": {
     "start": "adalo dev",
     "login": "adalo login",
@@ -33,6 +33,8 @@
     "@protonapp/react-native-material-ui": "^2.0.6",
     "react-native-audio-record": "^0.2.2",
     "react-native-permissions": "^3.2.0",
-    "react-native-vector-icons": "^9.0.0"
+    "react-native-sound": "^0.11.2",
+    "react-native-vector-icons": "^9.0.0",
+    "ffmpeg-kit-react-native": "^4.5.2"
   }
 }

@@ -2,43 +2,76 @@ import React, { useState, useEffect } from 'react'
 import { Text, View, StyleSheet, Platform, PermissionsAndroid } from 'react-native'
 import Permissions, { PERMISSIONS } from 'react-native-permissions';
 import AudioRecord from 'react-native-audio-record';
-import { Button } from "@protonapp/react-native-material-ui";
 import { Buffer } from 'buffer';
+import mediaSupported, { extensionsSupported } from "./mediaSuported";
+import AudioPlayer from './NativeAudioRecorder';
 
-let chunks = [];
+import { FFmpegKit } from 'ffmpeg-kit-react-native';
+
+import RNFS from 'react-native-fs';
+import axios from 'axios';
+
+const re = /(?:\.([^.]+))?$/;
+const getFilenameFromPath = path => path.substring(path.lastIndexOf('/') + 1);
+const getExtensionFromFilename = fileName => re.exec(fileName)[1];
+
+const storeFile = async (fileName, data) => {
+    let requestFilename = getFilenameFromPath(fileName).toLowerCase();
+    const extension = getExtensionFromFilename(fileName);
+   
+    if (Platform.OS === 'android') {
+       requestFilename = 'android_long_name_' + requestFilename;
+    }
+    console.log('Android filename:', requestFilename, extension);
+
+    try {
+      const result = await axios.post('https://database-red.adalo.com/uploads', {
+          filename: requestFilename,
+          data: data
+      });
+  
+
+      console.log('Android result:', result);
+      const uri = `https://adalo-uploads.imgix.net/${result.data.url}`
+      // await onChange({ filename: result.data.filename, size: result.data.size, cache: "force-cache", url:result.data.url, uri });
+      return { filename: result.data.filename, size: result.data.size, cache: "force-cache", url:result.data.url, uri };
+    }
+    catch (error) {
+      console.log('Android Error:', error);
+      throw error;
+    }
+};
+
+const getPureDataByUri = async (uri) => {
+    if (!uri || uri === '') { 
+        return null;
+    }
+    return await RNFS.readFile(uri, 'base64');
+};
+
 const AudioRecorder = (props) => {
   const [isRecordering, setIsRecording] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const [isRecorded, setIsRecorded] = useState(false);
 	const [hasPermissions, setHasPermissions] = useState(false)
+  const [mediaRecorderValue, setMediaRecorderValue ] = useState({});
   const {
     onError,
     editor,
-    startRecording,
-    pauseRecording,
-		resumeRecording,
-		stopRecording,
-		onStart,
-		onPause,
-		onResume,
-		onStop,
+    onStart,
+    onStop,
     onStream,
+    onStreamAsString,
     maxRecordingTime,
-    styles: { recordTitle: recordTitleStyles, pauseTitle: pauseTitleStyles, resumeTitle: resumeTitleStyles, stopTitle: stopTitleStyles },
-    recordTitle = "Play",
-    recordBackgroundColor,
-    recordIcon,
-    pauseTitle = "Pause",
-    pauseBackgroundColor,
-    pauseIcon,
-    resumeTitle = "Resume",
-    resumeBackgroundColor,
-    resumeIcon,
-    stopTitle = "Stop",
-    stopBackgroundColor,
-    stopIcon,
+    showPlayer,
+    commandName,
   } = props;
+
+  console.log('commandName', commandName);
+  const { value : commandNameValue, onChange : commandNameChangeValue } =  commandName;
+
   const getDeviceStream = async () => {
     try {
+      console.log('AudioRecord.pre-init')
 			AudioRecord.init({
 				sampleRate: 16000,  
 				channels: 1,        
@@ -46,10 +79,14 @@ const AudioRecorder = (props) => {
 				audioSource: 6,     
 				wavFile: 'stash.wav' 
 			})
+      console.log('AudioRecord.init')
 			AudioRecord.on('data', data => {
-				chunks.push(data)
-			})
+        const chunk = Buffer.from(data, 'base64');
+        console.log('chunk size', chunk.byteLength);
+        // do something with audio chunk
+      });
     } catch {
+      console.log('errors');
       if (onError) onError();
     }
   };
@@ -101,31 +138,12 @@ const AudioRecorder = (props) => {
       const recordingTimeout = setTimeout(() => {
 				stop()
         setIsRecording(false);
-        setIsPaused(false);
-			}, maxRecordingTime);
+        commandNameChangeValue('stop');
+			}, maxRecordingTime * 1000);
       return () => clearTimeout(recordingTimeout);
     }
   }, [maxRecordingTime, isRecordering]);
-  useEffect(() => {
-    if (!editor && startRecording === "true") {
-        start();
-    }
-  }, [editor, startRecording]);
-  useEffect(() => {
-    if (!editor && pauseRecording === "true") {
-        pause();
-    }
-  }, [editor, pauseRecording]);
-  useEffect(() => {
-    if (!editor && resumeRecording === "true") {
-        resume();
-    }
-  }, [editor, resumeRecording]);
-  useEffect(() => {
-    if (!editor && stopRecording === "true") {
-        stop();
-    }
-  }, [editor, stopRecording]);
+
   const start = () => {
 		if (!isRecordering && hasPermissions) {
 			if (onStart) onStart()
@@ -133,113 +151,67 @@ const AudioRecorder = (props) => {
 			setIsRecording(true);
 		}
   };
-  const stop = () => {
+  const stop = async () => {
     if (isRecordering && hasPermissions) {
       if (onStop) onStop();
-      AudioRecord.stop();
-      const blob = new Blob(chunks, { type: "audio/ogg; codecs=opus" });
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (onStream) {
-          onStream(reader.result);
-        }
-        chunks = []
-        setIsRecording(false);
-        setIsPaused(false);
-      };
-      reader.readAsDataURL(blob)
+
+      let audioFile = await AudioRecord.stop();
+      setIsRecording(false);
+      setIsRecorded(true);
+      setMediaRecorderValue({ filename: audioFile })
+      console.log('audioFile', audioFile);
     }
   };
-  const pause = () => {
-		if (!isPaused && isRecordering && hasPermissions) {
-			if (onPause) onPause()
-			AudioRecord.start();
-			setIsPaused(true);
-		}
-	};
-  const resume = () => {
-		if (isPaused && isRecordering && hasPermissions) {
-			if (onResume) onResume()
-			AudioRecord.stop();
-			setIsPaused(false);
-		}
-  };
 
-	return(
+  useEffect(() =>  {
+    console.log('commandNameValue', commandNameValue);
+
+    if (!editor && commandNameValue === "record") {
+      start();
+    } else if (!editor && commandNameValue === "stop") {
+      stop();
+    } else if (!editor && (commandNameValue === "stream" || commandNameValue === "init")) {
+      const asyncOperation = async () => {
+        if (commandNameValue === "stream" && (onStreamAsString || onStream)) {
+          const { filename } = mediaRecorderValue;
+
+          const mp3File = filename.replace('wav', 'mp3');
+
+          console.log('start transfer', filename, mp3File);
+          // await transcode(filename, "mystash.mp3", true);
+          const result = await FFmpegKit.execute(`-i ${filename} -codec:a libmp3lame -qscale:a 2 ${mp3File}`);
+          console.log('finish transfer', result);
+
+          const data = await getPureDataByUri(mp3File);
+
+          if (onStreamAsString) {
+            await onStreamAsString(data, mediaSupported());
+          }
+          
+          if ( onStream) {    
+            const storedFile = await storeFile(mp3File, data);      
+            await onStream(storedFile, mediaSupported());
+          }
+          RNFS.unlink(filename);
+          RNFS.unlink(mp3File);
+    
+          commandNameChangeValue('init');
+        } else if (commandNameValue === "stream" ) {
+          commandNameChangeValue('init');
+        }
+
+        setMediaRecorderValue({ filename: null });
+        setIsRecording(false);
+        setIsRecorded(false);
+      };
+
+      asyncOperation();
+    }
+  }, [ editor, commandNameValue ]);
+
+	return( 
     <View style={styles.wrapper}>
-      <Button
-        disabled={isRecordering}
-        icon={recordIcon}
-        text={recordTitle}
-				
-        onPress={start}
-        style={{
-          flex: 1,
-          container: {
-            backgroundColor: recordBackgroundColor,
-          },
-          text: {
-            color: recordTitleStyles?.color,
-            fontFamily: recordTitleStyles?.fontFamily,
-            fontSize: recordTitleStyles?.fontSize,
-            fontWeight: recordTitleStyles?.fontWeight,
-          },
-        }}
-      ></Button>
-      <Button
-        disabled={!isRecordering || isPaused}
-        icon={pauseIcon}
-        text={pauseTitle}
-        onPress={pause} 
-        style={{
-          flex: 1,
-          container: {
-            backgroundColor: pauseBackgroundColor,
-          },
-          text: {
-            color: pauseTitleStyles?.color,
-            fontFamily: pauseTitleStyles?.fontFamily,
-            fontSize: pauseTitleStyles?.fontSize,
-            fontWeight: pauseTitleStyles?.fontWeight,
-          },
-        }}
-      ></Button>
-      <Button
-        disabled={!isRecordering || !isPaused}
-        icon={resumeIcon}
-        text={resumeTitle}
-        onPress={resume}
-        style={{
-          flex: 1,
-          container: {
-            backgroundColor: resumeBackgroundColor,
-          },
-          text: {
-            color: resumeTitleStyles?.color,
-            fontFamily: resumeTitleStyles?.fontFamily,
-            fontSize: resumeTitleStyles?.fontSize,
-            fontWeight: resumeTitleStyles?.fontWeight,
-          },
-        }}
-      ></Button>
-      <Button
-        disabled={!isRecordering}
-        icon={stopIcon}
-        text={stopTitle}
-        onPress={stop}
-        style={{
-          flex: 1,
-          container: {
-            backgroundColor: stopBackgroundColor,
-          },
-          text: {
-            color: stopTitleStyles?.color,
-            fontFamily: stopTitleStyles?.fontFamily,
-            fontSize: stopTitleStyles?.fontSize,
-            fontWeight: stopTitleStyles?.fontWeight,
-          },
-        }}
-      ></Button>
+      { ((isRecorded && showPlayer) || editor) ?  (<AudioPlayer stream={mediaRecorderValue.filename}></AudioPlayer>) : (<></>) }
     </View>
 	)
 }
@@ -250,6 +222,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
 });
-
 
 export default AudioRecorder
