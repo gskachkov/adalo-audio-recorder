@@ -14,12 +14,12 @@ react-native link ffmpeg-kit-react-native
 # AndroidManifest
 
 sed -i.bak '/ ext {/a\
-\ ffmpegKitPackage = "audio"
+\ ffmpegKitPackage = "audio-lts"
 ' android/build.gradle
 
-sed -i.bak '/minSdkVersion = 21/c\
-\ minSdkVersion = 24
-' android/build.gradle
+#sed -i.bak '/minSdkVersion = 21/c\
+#\ minSdkVersion = 24
+#' android/build.gradle
 
 cd android/app
 cd src/main

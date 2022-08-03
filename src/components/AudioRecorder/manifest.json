@@ -3,7 +3,7 @@
   "defaultWidth": 405,
   "defaultHeight": 36,
   "components": "./index.js",
-  "icon": "./example-thumbnail.png",
+  "icon": "./audio-recorder-logo.png",
   "props": [
     {
       "name": "commandName",

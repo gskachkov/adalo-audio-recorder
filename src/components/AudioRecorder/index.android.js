@@ -8,6 +8,8 @@ import AudioPlayer from './NativeAudioRecorder';
 
 import { FFmpegKit } from 'ffmpeg-kit-react-native';
 
+import SubscriptionCheck from '../SubscriptionCheck/index';
+
 import RNFS from 'react-native-fs';
 import axios from 'axios';
 
@@ -64,6 +66,7 @@ const AudioRecorder = (props) => {
     maxRecordingTime,
     showPlayer,
     commandName,
+    appId
   } = props;
 
   console.log('commandName', commandName);
@@ -209,10 +212,12 @@ const AudioRecorder = (props) => {
     }
   }, [ editor, commandNameValue ]);
 
-	return( 
-    <View style={styles.wrapper}>
-      { ((isRecorded && showPlayer) || editor) ?  (<AudioPlayer stream={mediaRecorderValue.filename}></AudioPlayer>) : (<></>) }
-    </View>
+	return(
+    <SubscriptionCheck adaloAppId = { appId }   editor = { editor }>
+      <View style={styles.wrapper}>
+        { ((isRecorded && showPlayer) || editor) ?  (<AudioPlayer stream={mediaRecorderValue.filename}></AudioPlayer>) : (<></>) }
+      </View>
+    </SubscriptionCheck>
 	)
 }
 

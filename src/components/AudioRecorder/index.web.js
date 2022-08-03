@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Text, View, StyleSheet } from "react-native";
-import { Button, Icon } from "@protonapp/react-native-material-ui";
+import { View, StyleSheet } from "react-native";
 import AudioPlayer from "./audioPlayer";
 import mediaSupported, { extensionsSupported } from "./mediaSuported";
 
+import SubscriptionCheck from '../SubscriptionCheck/index';
+
 const AudioRecorder = (props) => {
+  console.log('Start!!!!!');
   const [isRecordering, setIsRecording] = useState(false);
   const [isRecorded, setIsRecorded] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState();
@@ -20,10 +22,11 @@ const AudioRecorder = (props) => {
     maxRecordingTime,
     showPlayer,
     commandName,
+    appId,
   } = props;
 
   const { value : commandNameValue, onChange : commandNameChangeValue } =  commandName;
-
+  console.log('Start #1');
   const getDeviceStream = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -124,11 +127,16 @@ const AudioRecorder = (props) => {
         <AudioPlayer src= { mediaRecorderValue ? mediaRecorderValue.stream : null }/>
     );
   }
-  return (
-    <View style={styles.wrapper}>
-      { ((isRecorded && showPlayer) || editor) ?  audioPlayerControl() : (<></>) }
-    </View>
-  );
+
+  const renderChildren = () => {
+    return (
+      <View style={styles.wrapper}>
+        { ((isRecorded && showPlayer) || editor) ?  audioPlayerControl() : (<></>) }
+      </View>
+    )
+  };
+
+  return (<SubscriptionCheck adaloAppId = { appId }  editor={ editor }>{ renderChildren() }</SubscriptionCheck>);
 };
 
 const styles = StyleSheet.create({
